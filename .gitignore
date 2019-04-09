@@ -1,0 +1,7 @@
+logs/*
+figs/*
+*.pyc
+examples/*
+gym/*
+*.egg-info/*
+.idea/*

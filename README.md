@@ -16,7 +16,9 @@ pip install -U 'gym[all]' tqdm scipy
 
 1. DQN: Q-Learning but with a deep neural network as a function approximator.
 
-   
+2. 
+
+    
 
 
 

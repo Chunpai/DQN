@@ -1,23 +1,25 @@
 import gym
 from time import sleep
+from gym.wrappers import Monitor
+import itertools
+import numpy as np
+import os
+import random
+import sys
+import tensorflow as tf
+from model import DQN
 
-env = gym.make('MsPacman-v0')
+env = gym.envs.make("Breakout-v0")
 ob = env.reset()
-for _ in range(2000):
-    env.render()
-    action = env.action_space.sample()
-    ob_next, reward, done, info = env.step(action) # take a random action
-    print("time: {}, action: {}, reward: {}".format(_, action, reward))
-    if done:
-        print("Episode finished after {} timesteps, reward: {}".format(_, reward))
-        break
-env.close()
 
-# import tensorflow
-# import matplotlib
-# # matplotlib.use('GTKAgg')
-# import matplotlib.pyplot as plt
-# import numpy as np
-#
-# plt.plot(np.arange(100))
-# plt.show()
+
+tf.reset_default_graph()
+# Where we save our checkpoints and graphs
+experiment_dir = os.path.abspath("./experiments/{}".format(env.spec.id))
+# Create a glboal step variable
+global_step = tf.Variable(0, name='global_step', trainable=False)
+
+# Create estimators
+q_estimator = DQN(scope="q", summaries_dir=experiment_dir)
+target_estimator = DQN(scope="target_q")
+

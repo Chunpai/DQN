@@ -8,8 +8,7 @@ Implementation of Deep Q-Networks on Atari games with *Tensorflow-gpu 1.13* in *
 - gym
 
 ```bash
-
-pip install -U 'gym[all]' tqdm scipy
+pip install -U 'gym[all]'
 ```
 
 ### Summary

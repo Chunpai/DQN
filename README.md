@@ -18,8 +18,11 @@ pip install -U 'gym[all]'
 2. 
 
     
+   $$
+   \sum_{a\in A} a + b = 10
+   $$
 
-
+3. 
 
 ### Reference
 

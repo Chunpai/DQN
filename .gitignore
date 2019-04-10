@@ -5,3 +5,4 @@ examples/*
 gym/*
 *.egg-info/*
 .idea/*
+__pycache__/*

@@ -35,6 +35,7 @@ import matplotlib.pyplot as plt
 print(tf.__version__)
 
 
+"""
 fashion_mnist = keras.datasets.fashion_mnist
 
 (train_images, train_labels), (test_images, test_labels) = fashion_mnist.load_data()
@@ -70,7 +71,7 @@ model = keras.Sequential([
 ])
 
 model.summary()
-
+"""
 
 # model.compile(optimizer='adam',
 #           loss='sparse_categorical_crossentropy',
@@ -156,3 +157,12 @@ for x in ds_tensors:
 # layer = tf.keras.layers.Dense(100)
 # layer(tf.zeros([10, 5]))
 # print(layer.kernel.shape)
+
+# import time
+# import sys
+#
+# for i in range(5):
+#     print(i, end='')
+#     sys.stdout.flush()
+#     time.sleep(1)
+

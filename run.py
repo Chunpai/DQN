@@ -10,6 +10,7 @@ import plotting
 from collections import deque, namedtuple
 import itertools
 import random
+from model import Estimator
 
 print(tf.__version__)
 env = gym.envs.make("Breakout-v0")
@@ -36,53 +37,57 @@ def state_process(input_state):
 
 VALID_ACTIONS = [0, 1, 2, 3]
 
-model = keras.Sequential([keras.layers.Conv2D(32, (8, 8), 4,
-                                              input_shape=(84, 84, 4),
-                                              activation='relu',
-                                              padding='same'),
-                          keras.layers.Conv2D(64, (4, 4), 2,
-                                              activation='relu',
-                                              padding='same'),
-                          keras.layers.Conv2D(64, (3, 3), 1,
-                                              activation='relu',
-                                              padding='same'),
-                          keras.layers.Flatten(),
-                          keras.layers.Dense(512),
-                          keras.layers.Dense(len(VALID_ACTIONS))
-                          ])
-model.summary()  # we need to specify the input shape in order to see the summary.
+# model = keras.Sequential([keras.layers.Conv2D(32, (8, 8), 4,
+#                                               input_shape=(84, 84, 4),
+#                                               activation='relu',
+#                                               padding='same'),
+#                           keras.layers.Conv2D(64, (4, 4), 2,
+#                                               activation='relu',
+#                                               padding='same'),
+#                           keras.layers.Conv2D(64, (3, 3), 1,
+#                                               activation='relu',
+#                                               padding='same'),
+#                           keras.layers.Flatten(),
+#                           keras.layers.Dense(512),
+#                           keras.layers.Dense(len(VALID_ACTIONS))
+#                           ])
+# model.summary()  # we need to specify the input shape in order to see the summary.
+q_estimator = Estimator(len(VALID_ACTIONS))
+target_estimator = Estimator(len(VALID_ACTIONS))
+
+
 
 
 # output = model(train_input)
 
-def loss(q_output, td_target):
+def loss(model, x, y):
     """
     loss of regression
-    :param q_output: output of network Q
-    :param td_target: output of target network Q hat
+    :param x: input of network Q
+    :param y: output of target network Q hat
     :return: mean square of (q_output - td_target)
     """
-    return tf.reduce_mean(tf.square(q_output - td_target))
+    loss_object = tf.keras.losses.mean_squared_error(from_logits=True)
+    y_ = model(x)
+    return loss_object(y_true = y, y_pred = y_)
 
 
-def grad(model, inputs, targets):
+def loss_grad(model, inputs, targets):
     with tf.GradientTape() as tape:
         loss_value = loss(inputs, targets)
     return loss_value, tape.gradient(loss_value, model.trainable_variables)
 
 
-def predict():
-    return
 
-
-def behavior_policy(estimator, num_actions):
+def behavior_policy(estimator, state, epsilon, num_actions):
     """
     create a behavior policy (epsilon-greedy) based on a given Q-function estimator
     :param estimator:
     :param num_actions:
     :return:
     """
-    return
+
+    return action_probs
 
 
 def deep_q_learning(env, q_estimator, target_estimator, num_episodes, log_dir,
@@ -146,6 +151,8 @@ def deep_q_learning(env, q_estimator, target_estimator, num_episodes, log_dir,
     # env = Monitor()
 
     current_decay_step = 0
+    optimizer = tf.keras.optimizers.Adam(learning_rate=0.01)
+
     # simply follow the pseudocode of DQN algorithm
     for i_episode in range(num_episodes):
         # reset the environment for every episode
@@ -160,13 +167,14 @@ def deep_q_learning(env, q_estimator, target_estimator, num_episodes, log_dir,
             epsilon = epsilons[min(current_decay_step, epsilon_decay_steps-1)]
             # update the target estimator every some steps
             if current_decay_step % update_target_estimator_every == 0:
-                copy_model_parameters(q_estimator, target_estimator)
+                target_estimator = keras.models.clone_model(q_estimator)
+                target_estimator.set_weights(q_estimator.get_weights())
                 print("\nCopied model parameters to target network.")
 
             sys.stdout.flush()
 
             # Take a step
-            action_probs = policy(state, epsilon)
+            action_probs = behavior_policy(q_estimator, state, epsilon, num_actions)
             action = np.random.choice(np.arange(len(action_probs)), p=action_probs)
             next_state, reward, done, _ = env.step(VALID_ACTIONS[action])
             next_state = state_process(next_state)
@@ -176,8 +184,19 @@ def deep_q_learning(env, q_estimator, target_estimator, num_episodes, log_dir,
                 replay_buffer.pop(0)
 
             replay_buffer.append(Transition(state, action, reward, next_state, done))
-
             samples = random.sample(replay_buffer, batch_size)
+            states_batch, action_batch, reward_batch, next_states_batch, done_batch = map(np.array, zip(*samples)) #* used to unpack the seq.
+
+            # Calculate q values and targets (Double DQN)
+            target_values = target_estimator.predict(next_states_batch)
+            # q_values = q_estimator.predict(states_batch)
+            # Perform gradient descent update
+            # states_batch = np.array(states_batch)
+            loss_value, grads = loss_grad(q_estimator, states_batch, target_values)
+            optimizer.apply_gradients(zip(grads, q_estimator.trainable_variables))
 
 
+            if done:
+                break
+            state = next_state
     return

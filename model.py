@@ -23,6 +23,3 @@ class Estimator(Model):
         x = self.d2(x)
         return x
 
-    def predict(self, inputs):
-        return self.call(inputs)
-

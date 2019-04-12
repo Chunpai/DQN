@@ -35,7 +35,7 @@ def state_process(input_state):
     return output
 
 
-VALID_ACTIONS = [0, 1, 2, 3]
+
 
 # model = keras.Sequential([keras.layers.Conv2D(32, (8, 8), 4,
 #                                               input_shape=(84, 84, 4),
@@ -52,10 +52,10 @@ VALID_ACTIONS = [0, 1, 2, 3]
 #                           keras.layers.Dense(len(VALID_ACTIONS))
 #                           ])
 # model.summary()  # we need to specify the input shape in order to see the summary.
+
+VALID_ACTIONS = [0, 1, 2, 3]
 q_estimator = Estimator(len(VALID_ACTIONS))
 target_estimator = Estimator(len(VALID_ACTIONS))
-
-
 
 
 # output = model(train_input)
@@ -69,25 +69,36 @@ def loss(model, x, y):
     """
     loss_object = tf.keras.losses.mean_squared_error(from_logits=True)
     y_ = model(x)
-    return loss_object(y_true = y, y_pred = y_)
+    return loss_object(y_true=y, y_pred=y_)
 
 
 def loss_grad(model, inputs, targets):
+    """
+    compute the loss gradient w.r.t to all trainable variables in the model
+    :param model: we will update the q_estimator to approximate the TD Target
+    :param inputs: input of the model, state
+    :param targets: the TD target
+    :return: loss value and the loss gradient
+    """
     with tf.GradientTape() as tape:
         loss_value = loss(inputs, targets)
     return loss_value, tape.gradient(loss_value, model.trainable_variables)
 
 
-
 def behavior_policy(estimator, state, epsilon, num_actions):
     """
     create a behavior policy (epsilon-greedy) based on a given Q-function estimator
-    :param estimator:
-    :param num_actions:
+    :param estimator: q_estimator
+    :param state: the input state
+    :param epsilon: the current epsilon
+    :param num_actions: size of action space
     :return:
     """
-
-    return action_probs
+    A = np.ones(num_actions, dtype=float) * epsilon / num_actions
+    q_values = estimator(np.expand_dims(state, 0))[0]
+    best_action = np.argmax(q_values)
+    A[best_action] += (1.0 - epsilon)
+    return A
 
 
 def deep_q_learning(env, q_estimator, target_estimator, num_episodes, log_dir,
@@ -100,6 +111,8 @@ def deep_q_learning(env, q_estimator, target_estimator, num_episodes, log_dir,
                     epsilon_decay_steps=500000,
                     batch_size=32,
                     record_video_every=50):
+
+
     Transition = namedtuple("Transition", ["state", "action", "reward", "next_state", "done"])
     replay_buffer = []
     # Keeps track of useful statistics
@@ -126,14 +139,15 @@ def deep_q_learning(env, q_estimator, target_estimator, num_episodes, log_dir,
 
     # epsilon decay scheduling
     epsilons = np.linspace(epsilon_start, epsilon_end, epsilon_decay_steps)
-    policy = behavior_policy(q_estimator, len(VALID_ACTIONS))
     state = env.reset()
     state = state_process(state)
     state = np.stack([state] * 4, axis=2)  # shape (84, 84, 4)
 
+    total_t = 0
+    num_actions = len(VALID_ACTIONS)
     # initialize the replay buffer
     for i in range(replay_buffer_init_size):
-        action_probs = policy(state, epsilons[0])
+        action_probs = behavior_policy(q_estimator, state, epsilons[total_t], num_actions)
         action = np.random.choice(VALID_ACTIONS, p=action_probs)
         next_state, reward, done, _ = env.step(VALID_ACTIONS[action])
         next_state = state_process(next_state)
@@ -162,9 +176,9 @@ def deep_q_learning(env, q_estimator, target_estimator, num_episodes, log_dir,
         loss = None
 
         # one step in environment, and iteratively generate full episode as well.
-        for t in itertools.count(): # same as while loop
+        for t in itertools.count():  # same as while loop
             # get epsilon for current step
-            epsilon = epsilons[min(current_decay_step, epsilon_decay_steps-1)]
+            epsilon = epsilons[min(total_t, epsilon_decay_steps - 1)]
             # update the target estimator every some steps
             if current_decay_step % update_target_estimator_every == 0:
                 target_estimator = keras.models.clone_model(q_estimator)
@@ -185,18 +199,18 @@ def deep_q_learning(env, q_estimator, target_estimator, num_episodes, log_dir,
 
             replay_buffer.append(Transition(state, action, reward, next_state, done))
             samples = random.sample(replay_buffer, batch_size)
-            states_batch, action_batch, reward_batch, next_states_batch, done_batch = map(np.array, zip(*samples)) #* used to unpack the seq.
+            states_batch, action_batch, reward_batch, next_states_batch, done_batch = map(np.array, zip(*samples))  # * used to unpack the seq.
 
             # Calculate q values and targets (Double DQN)
-            target_values = target_estimator.predict(next_states_batch)
+            target_values = target_estimator(next_states_batch)
             # q_values = q_estimator.predict(states_batch)
             # Perform gradient descent update
             # states_batch = np.array(states_batch)
             loss_value, grads = loss_grad(q_estimator, states_batch, target_values)
             optimizer.apply_gradients(zip(grads, q_estimator.trainable_variables))
 
-
             if done:
                 break
             state = next_state
+            total_t += 1
     return

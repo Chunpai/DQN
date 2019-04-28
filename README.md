@@ -18,12 +18,15 @@ pip install -U 'gym[all]'
 
 1. DQN: Q-Learning but with a deep neural network as a function approximator.
 2. 
+<<<<<<< HEAD
 
 
 ### Log
 1.  Create the neural network model which will be estimator of Q function and target function. Be cautious of the input and output shape.
 2.  Note that, the input state of the model is preprocessed, and we may need to print out or output the input state to visualize and validate it.
 3.  
+=======
+>>>>>>> 6f4843efe15ffe7397da609412ee478ef71ba9b6
 
 ### Reference
 

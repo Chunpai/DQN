@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="RemoteMappingsManager">
+    <list>
+      <list>
+        <remote-mappings server-id="python@sftp://cw154497@ceashpc-11.rit.albany.edu:22/network/rit/lab/ceashpc/chunpai/snap/anaconda3/envs/virenv3/bin/python3">
+          <settings>
+            <list>
+              <mapping local-root="$PROJECT_DIR$" remote-root="/network/rit/lab/ceashpc/chunpai/PycharmProjects/DQN" />
+            </list>
+          </settings>
+        </remote-mappings>
+      </list>
+    </list>
+  </component>
+</project>

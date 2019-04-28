@@ -10,17 +10,9 @@ import plotting
 from collections import deque, namedtuple
 import itertools
 import random
-<<<<<<< HEAD
 from estimator import Estimator
 
 print(tf.__version__)
-=======
-from model import Estimator
-
-print(tf.__version__)
-env = gym.envs.make("Breakout-v0")
-
->>>>>>> 6f4843efe15ffe7397da609412ee478ef71ba9b6
 
 # ds_tensors = tf.data.Dataset.from_tensor_slices([1, 2, 3, 4, 5, 6])
 # ds_tensors = ds_tensors.map(tf.square).shuffle(2).batch(2)
@@ -28,23 +20,17 @@ env = gym.envs.make("Breakout-v0")
 # for x in ds_tensors:
 #     print(x)
 
-<<<<<<< HEAD
 VALID_ACTIONS = [0, 1, 2, 3]
 
 
 @tf.function
-=======
->>>>>>> 6f4843efe15ffe7397da609412ee478ef71ba9b6
 def state_process(input_state):
     """
     Processes a raw Atari images. Resizes it and converts it to grayscale.
     :param input_state: A [210, 160, 3] Atari RGB State
     :return: A processed [84, 84] state representing grayscale values.
     """
-<<<<<<< HEAD
     # print("shape of input_state {}".format(input_state.shape))
-=======
->>>>>>> 6f4843efe15ffe7397da609412ee478ef71ba9b6
     output = tf.image.rgb_to_grayscale(input_state)
     output = tf.image.crop_to_bounding_box(output, 34, 0, 160, 160)
     output = tf.image.resize(output, [84, 84], method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
@@ -52,49 +38,8 @@ def state_process(input_state):
     return output
 
 
-<<<<<<< HEAD
 @tf.function
 def loss_grad(model, state_batch, action_batch, target_batch):
-=======
-
-
-# model = keras.Sequential([keras.layers.Conv2D(32, (8, 8), 4,
-#                                               input_shape=(84, 84, 4),
-#                                               activation='relu',
-#                                               padding='same'),
-#                           keras.layers.Conv2D(64, (4, 4), 2,
-#                                               activation='relu',
-#                                               padding='same'),
-#                           keras.layers.Conv2D(64, (3, 3), 1,
-#                                               activation='relu',
-#                                               padding='same'),
-#                           keras.layers.Flatten(),
-#                           keras.layers.Dense(512),
-#                           keras.layers.Dense(len(VALID_ACTIONS))
-#                           ])
-# model.summary()  # we need to specify the input shape in order to see the summary.
-
-VALID_ACTIONS = [0, 1, 2, 3]
-q_estimator = Estimator(len(VALID_ACTIONS))
-target_estimator = Estimator(len(VALID_ACTIONS))
-
-
-# output = model(train_input)
-
-def loss(model, x, y):
-    """
-    loss of regression
-    :param x: input of network Q
-    :param y: output of target network Q hat
-    :return: mean square of (q_output - td_target)
-    """
-    loss_object = tf.keras.losses.mean_squared_error(from_logits=True)
-    y_ = model(x)
-    return loss_object(y_true=y, y_pred=y_)
-
-
-def loss_grad(model, inputs, targets):
->>>>>>> 6f4843efe15ffe7397da609412ee478ef71ba9b6
     """
     compute the loss gradient w.r.t to all trainable variables in the model
     :param model: we will update the q_estimator to approximate the TD Target
@@ -102,7 +47,6 @@ def loss_grad(model, inputs, targets):
     :param targets: the TD target
     :return: loss value and the loss gradient
     """
-<<<<<<< HEAD
 
     state_batch = tf.cast(state_batch, tf.float32)
     action_batch = tf.cast(action_batch, tf.int32)
@@ -119,11 +63,6 @@ def loss_grad(model, inputs, targets):
     # optimizer = tf.keras.optimizers.RMSprop(lr=0.00025, decay=0.99, rho=0, epsilon=1e-6)
     # optimizer.apply_gradients(zip(gradients, model.trainable_variables))
     return loss, gradients
-=======
-    with tf.GradientTape() as tape:
-        loss_value = loss(inputs, targets)
-    return loss_value, tape.gradient(loss_value, model.trainable_variables)
->>>>>>> 6f4843efe15ffe7397da609412ee478ef71ba9b6
 
 
 def behavior_policy(estimator, state, epsilon, num_actions):
@@ -136,17 +75,12 @@ def behavior_policy(estimator, state, epsilon, num_actions):
     :return:
     """
     A = np.ones(num_actions, dtype=float) * epsilon / num_actions
-<<<<<<< HEAD
     q_values = estimator(np.expand_dims(state, 0).astype(np.float32) / 255.0)[0]
-=======
-    q_values = estimator(np.expand_dims(state, 0))[0]
->>>>>>> 6f4843efe15ffe7397da609412ee478ef71ba9b6
     best_action = np.argmax(q_values)
     A[best_action] += (1.0 - epsilon)
     return A
 
 
-<<<<<<< HEAD
 @tf.function   # we must use tf.print to print in this decoration function
 def copy_model_parameters(estimator1, estimator2):
     """
@@ -176,18 +110,10 @@ def deep_q_learning(env, q_estimator, target_estimator, log_dir,
                     replay_buffer_size=500000,
                     replay_buffer_init_size=50000,
                     update_target_estimator_every=10000,
-=======
-def deep_q_learning(env, q_estimator, target_estimator, num_episodes, log_dir,
-                    replay_buffer_size=500000,
-                    replay_buffer_init_size=50000,
-                    update_target_estimator_every=10000,
-                    discount_factor=0.99,
->>>>>>> 6f4843efe15ffe7397da609412ee478ef71ba9b6
                     epsilon_start=1.0,
                     epsilon_end=0.1,
                     epsilon_decay_steps=500000,
                     batch_size=32,
-<<<<<<< HEAD
                     discount_factor=0.99,
                     record_video_every=50):
 
@@ -210,27 +136,6 @@ def deep_q_learning(env, q_estimator, target_estimator, num_episodes, log_dir,
         os.makedirs(checkpoint_dir)
     # if not os.path.exists(monitor_path):
     #     os.makedirs(monitor_path)
-=======
-                    record_video_every=50):
-
-
-    Transition = namedtuple("Transition", ["state", "action", "reward", "next_state", "done"])
-    replay_buffer = []
-    # Keeps track of useful statistics
-    stats = plotting.EpisodeStats(
-        episode_lengths=np.zeros(num_episodes),
-        episode_rewards=np.zeros(num_episodes))
-
-    # Create directories for checkpoints and summaries
-    checkpoint_dir = os.path.join(log_dir, "checkpoints")
-    checkpoint_path = os.path.join(checkpoint_dir, "model")
-    monitor_path = os.path.join(log_dir, "monitor")
-
-    if not os.path.exists(checkpoint_dir):
-        os.makedirs(checkpoint_dir)
-    if not os.path.exists(monitor_path):
-        os.makedirs(monitor_path)
->>>>>>> 6f4843efe15ffe7397da609412ee478ef71ba9b6
 
     # saver = tf.train.Saver()
     # # Load a previous checkpoint if we find one
@@ -239,17 +144,13 @@ def deep_q_learning(env, q_estimator, target_estimator, num_episodes, log_dir,
     #     print("Loading model checkpoint {}...\n".format(latest_checkpoint))
     #     saver.restore(latest_checkpoint)
 
-<<<<<<< HEAD
     total_t = 0
     num_actions = len(VALID_ACTIONS)
-=======
->>>>>>> 6f4843efe15ffe7397da609412ee478ef71ba9b6
     # epsilon decay scheduling
     epsilons = np.linspace(epsilon_start, epsilon_end, epsilon_decay_steps)
     state = env.reset()
     state = state_process(state)
     state = np.stack([state] * 4, axis=2)  # shape (84, 84, 4)
-<<<<<<< HEAD
     # initialize the replay buffer
     for i in range(replay_buffer_init_size):
         if i % 2 == 0:
@@ -257,14 +158,6 @@ def deep_q_learning(env, q_estimator, target_estimator, num_episodes, log_dir,
         else: # the reason to do this is to initialize the variable in target_estimator, thus we can copy parameters
             action_probs = behavior_policy(target_estimator, state, epsilons[total_t], num_actions)
 
-=======
-
-    total_t = 0
-    num_actions = len(VALID_ACTIONS)
-    # initialize the replay buffer
-    for i in range(replay_buffer_init_size):
-        action_probs = behavior_policy(q_estimator, state, epsilons[total_t], num_actions)
->>>>>>> 6f4843efe15ffe7397da609412ee478ef71ba9b6
         action = np.random.choice(VALID_ACTIONS, p=action_probs)
         next_state, reward, done, _ = env.step(VALID_ACTIONS[action])
         next_state = state_process(next_state)
@@ -277,7 +170,6 @@ def deep_q_learning(env, q_estimator, target_estimator, num_episodes, log_dir,
             state = np.stack([state] * 4, axis=2)
         else:
             state = next_state
-<<<<<<< HEAD
     print("Done initialization of the replay buffer !")
     # Record videos using the gum env monitor wrapper
     # env = Monitor()
@@ -306,33 +198,6 @@ def deep_q_learning(env, q_estimator, target_estimator, num_episodes, log_dir,
                 print("\nCopied model parameters to target network.")
             print("\rStep: {} ({}) at Episode {}/{}, loss: {}".format(t, total_t, i_episode + 1, num_episodes, loss), end="")
             # print("Step: {} ({}) at Episode {}/{}, loss: {}".format(t, total_t, i_episode + 1, num_episodes, loss))
-=======
-
-    # Record videos using the gum env monitor wrapper
-    # env = Monitor()
-
-    current_decay_step = 0
-    optimizer = tf.keras.optimizers.Adam(learning_rate=0.01)
-
-    # simply follow the pseudocode of DQN algorithm
-    for i_episode in range(num_episodes):
-        # reset the environment for every episode
-        state = env.reset()
-        state = state_process(state)
-        state = np.stack([state] * 4, axis=2)
-        loss = None
-
-        # one step in environment, and iteratively generate full episode as well.
-        for t in itertools.count():  # same as while loop
-            # get epsilon for current step
-            epsilon = epsilons[min(total_t, epsilon_decay_steps - 1)]
-            # update the target estimator every some steps
-            if current_decay_step % update_target_estimator_every == 0:
-                target_estimator = keras.models.clone_model(q_estimator)
-                target_estimator.set_weights(q_estimator.get_weights())
-                print("\nCopied model parameters to target network.")
-
->>>>>>> 6f4843efe15ffe7397da609412ee478ef71ba9b6
             sys.stdout.flush()
 
             # Take a step
@@ -346,7 +211,6 @@ def deep_q_learning(env, q_estimator, target_estimator, num_episodes, log_dir,
                 replay_buffer.pop(0)
 
             replay_buffer.append(Transition(state, action, reward, next_state, done))
-<<<<<<< HEAD
             stats.episode_rewards[i_episode] += reward
             stats.episode_lengths[i_episode] = t
 
@@ -376,24 +240,10 @@ def deep_q_learning(env, q_estimator, target_estimator, num_episodes, log_dir,
             # with summary_writer.as_default():
             #     tf.summary.scalar("loss", loss, step=total_t)
 
-=======
-            samples = random.sample(replay_buffer, batch_size)
-            states_batch, action_batch, reward_batch, next_states_batch, done_batch = map(np.array, zip(*samples))  # * used to unpack the seq.
-
-            # Calculate q values and targets (Double DQN)
-            target_values = target_estimator(next_states_batch)
-            # q_values = q_estimator.predict(states_batch)
-            # Perform gradient descent update
-            # states_batch = np.array(states_batch)
-            loss_value, grads = loss_grad(q_estimator, states_batch, target_values)
-            optimizer.apply_gradients(zip(grads, q_estimator.trainable_variables))
-
->>>>>>> 6f4843efe15ffe7397da609412ee478ef71ba9b6
             if done:
                 break
             state = next_state
             total_t += 1
-<<<<<<< HEAD
 
         # # Add summaries to tensorboard
         # with summary_writer.as_default():
@@ -489,6 +339,3 @@ for t, ep, stats in deep_q_learning(env, q_estimator, target_estimator, log_dir,
                                 batch_size=32,
                                 discount_factor=0.99):
     print("\nEpisode Reward: {}, {}".format(ep, stats.episode_rewards[-1]))
-=======
-    return
->>>>>>> 6f4843efe15ffe7397da609412ee478ef71ba9b6
